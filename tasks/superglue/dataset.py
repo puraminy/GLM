@@ -705,6 +705,40 @@ class RecordProcessor(DataProcessor):
             f"distribution {list(label_distribution.items())}")
         return examples
 
+import pandas as pd
+class AtomicProcessor(DataProcessor):
+    """Processor for the BoolQ data set."""
+
+    def get_train_examples(self, data_dir):
+        return self._create_examples(os.path.join(data_dir, "atomic_train.tsv"), "train")
+
+    def get_dev_examples(self, data_dir, for_train=False):
+        return self._create_examples(os.path.join(data_dir, "atomic_validation.tsv"), "dev")
+
+    def get_test_examples(self, data_dir):
+        return self._create_examples(os.path.join(data_dir, "atomic_test.tsv"), "test")
+
+    def get_unlabeled_examples(self, data_dir):
+        return self._create_examples(os.path.join(data_dir, "unlabeled.jsonl"), "unlabeled")
+
+    def get_labels(self):
+        return ["xWant", "oWant", "xAttr", "xNeed", "xIntent", "xEffect", "xReact", "oReact", "oEffect"]
+
+    @staticmethod
+    def _create_examples(path: str, set_type: str) -> List[InputExample]:
+        examples = []
+
+        df = pd.read_table(path)
+        for idx, row in df.iterrows():
+            label = str(row['prefix'])
+            guid = "%s-%s" % (set_type, idx)
+            text_a = str(row['input_text'])
+            text_b = str(row['target_text'])
+            example = InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label, idx=idx)
+            examples.append(example)
+
+        return examples
+
 
 PROCESSORS = {
     "wic": WicProcessor,
@@ -716,4 +750,5 @@ PROCESSORS = {
     "copa": CopaProcessor,
     "multirc": MultiRcProcessor,
     "record": RecordProcessor,
+    "atomic": AtomicProcessor,
 }
