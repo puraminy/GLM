@@ -884,6 +884,29 @@ def get_verbalization_ids(word: str, tokenizer, force_single_token: bool) -> Uni
         f'Verbalization {word} is mapped to a special token {tokenizer.IdToToken(verbalization_id)}'
     return verbalization_id
 
+class AtomicPVP(PVP):
+    is_multi_token = True
+    VERBALIZER = {
+         "oEffect":["The effect on others will be "],
+         "oReact":["As a result, others feel "],
+         "oWant":["After, others will want to "],
+         "xAttr":["PersonX is "],
+         "xEffect":["The effect on PersonX will be "],
+         "xIntent":["PersonX did this to "],
+         "xNeed":["Before, PersonX needs to "],
+         "xReact":["PersonX will be "],
+         "xReason":["PersonX did this because "],
+         "xWant":["After, PersonX will want to "]
+    }
+
+    def get_parts(self, example: InputExample) -> FilledPattern:
+        # switch text_a and text_b to get the correct order
+        text_a = example.text_a
+        text_b = example.text_b.rstrip(string.punctuation)
+        return ['"', self.shortenable(text_a), '";'], [[self.mask], '"', self.shortenable(text_b), '"']
+
+    def verbalize(self, label) -> List[str]:
+        return AtomicPVP.VERBALIZER[label]
 
 PVPS = {
     'rte': RtePVP,
@@ -896,4 +919,5 @@ PVPS = {
     'record': RecordPVP,
     'ax-b': RtePVP,
     'ax-g': RtePVP,
+    'atomic': AtomicPVP,
 }
